@@ -3,12 +3,39 @@ import {
   verify,
   getNumericDate,
 } from "https://deno.land/x/djwt@v2.4/mod.ts";
+import config from "../config.ts";
+import { isExistedFile, resolvePath } from "./path.ts";
+import {
+  encode,
+  decode,
+} from "https://deno.land/std@0.125.0/encoding/base64.ts";
 
-function generateKey() {
-  return crypto.subtle.generateKey({ name: "HMAC", hash: "SHA-512" }, true, [
-    "sign",
-    "verify",
-  ]);
+let jwtKey: CryptoKey | undefined;
+const algorithm: HmacKeyGenParams = { name: "HMAC", hash: "SHA-512" };
+const usages: KeyUsage[] = ["sign", "verify"];
+
+async function generateKey() {
+  if (jwtKey) return jwtKey;
+
+  const existed = await isExistedFile(resolvePath(config.jwtKeyFile));
+  if (existed) {
+    const content = await Deno.readTextFile(config.jwtKeyFile);
+    const binary = decode(content).buffer;
+
+    jwtKey = await crypto.subtle.importKey(
+      "raw",
+      binary,
+      algorithm,
+      true,
+      usages
+    );
+  } else {
+    jwtKey = await crypto.subtle.generateKey(algorithm, true, usages);
+    const content = await crypto.subtle.exportKey("raw", jwtKey);
+    await Deno.writeTextFile(config.jwtKeyFile, encode(content));
+  }
+
+  return jwtKey;
 }
 
 export async function generateJwt(

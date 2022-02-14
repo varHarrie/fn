@@ -19,7 +19,7 @@ type LoginBody = {
 
 const loginBOdySchema = {
   username: [required, isString],
-  password: [required, isString],
+  password: [isString],
 };
 
 authRouter.post("/login", async (ctx) => {
@@ -38,7 +38,11 @@ authRouter.post("/login", async (ctx) => {
     return ctx.throw(Status.BadRequest, "Password is incorrect");
   }
 
-  const token = generateJwt({ username: body.username }, config.jwtExpires);
+  const token = await generateJwt(
+    { username: body.username },
+    config.jwtExpires
+  );
+
   ctx.response.body = { status: "ok", token };
 });
 

@@ -9,3 +9,16 @@ export function resolvePath(...paths: string[]) {
     ? path.join(...paths)
     : path.join(root, ...paths);
 }
+
+export async function isExistedFile(path: string) {
+  try {
+    const info = await Deno.stat(path);
+    return info.isFile;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false;
+    } else {
+      throw error;
+    }
+  }
+}

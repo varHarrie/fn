@@ -15,7 +15,7 @@ import jwtAuthentication from "../middlewares/jwt-authentication.ts";
 import config from "../config.ts";
 
 const privateRouter = new Router({ prefix: "/api" });
-privateRouter.use(jwtAuthentication);
+privateRouter.use(jwtAuthentication());
 
 type CreateUserBody = {
   username: string;
