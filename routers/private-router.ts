@@ -40,6 +40,13 @@ privateRouter.post("/users", async (ctx) => {
   };
 });
 
+privateRouter.get("/users", async (ctx) => {
+  ctx.response.body = {
+    status: "ok",
+    users: await users.list(),
+  };
+});
+
 type CreateFunctionBody = {
   method: HTTPMethods;
   url: string;

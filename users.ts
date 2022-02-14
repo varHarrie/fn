@@ -14,6 +14,11 @@ async function save() {
   await Deno.writeTextFile(resolvePath(config.usersFile), json);
 }
 
+export async function list() {
+  if (!users.length) await load();
+  return users.map(({ password: _, ...rest }) => rest);
+}
+
 export async function get(username: string) {
   if (!users.length) await load();
   return users.find((u) => u.username === username);
