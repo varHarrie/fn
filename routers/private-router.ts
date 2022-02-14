@@ -1,6 +1,7 @@
 import { HTTPMethods } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { Router } from "https://deno.land/x/oak@v10.2.0/router.ts";
 import * as fs from "https://deno.land/std@0.125.0/fs/mod.ts";
+import { Md5 } from "https://deno.land/std@0.125.0/hash/md5.ts";
 import {
   match,
   isString,
@@ -9,9 +10,35 @@ import {
 } from "https://deno.land/x/validasaur@v0.15.0/mod.ts";
 import { validateBody } from "../utils/validate.ts";
 import { resolvePath } from "../utils/path.ts";
+import * as users from "../users.ts";
+import jwtAuthentication from "../middlewares/jwt-authentication.ts";
 import config from "../config.ts";
 
 const privateRouter = new Router({ prefix: "/api" });
+privateRouter.use(jwtAuthentication);
+
+type CreateUserBody = {
+  username: string;
+};
+
+const createUserSchema = {
+  username: [required, match(/^[0-9a-z]{3,36}$/)],
+};
+
+privateRouter.post("/users", async (ctx) => {
+  const body: CreateUserBody = await validateBody(ctx, createUserSchema);
+
+  const password = Math.random().toString(36).slice(0, 8);
+  const passwordMd5 = new Md5()
+    .update(password + config.passwordSalt)
+    .toString();
+  await users.add({ username: body.username, password: passwordMd5 });
+
+  ctx.response.body = {
+    status: "ok",
+    password,
+  };
+});
 
 type CreateFunctionBody = {
   method: HTTPMethods;
@@ -25,7 +52,7 @@ const createFunctionSchema = {
   code: [required, isString],
 };
 
-privateRouter.post("/f/", async (ctx) => {
+privateRouter.post("/functions", async (ctx) => {
   const body: CreateFunctionBody = await validateBody(
     ctx,
     createFunctionSchema
@@ -37,7 +64,7 @@ privateRouter.post("/f/", async (ctx) => {
   await fs.ensureDir(dirPath);
   await Deno.writeTextFile(filePath, body.code);
 
-  ctx.response.body = { status: "ok" };
+  ctx.response.body = { status: "ok", method: body.method, url: body.url };
 });
 
 export default privateRouter;
