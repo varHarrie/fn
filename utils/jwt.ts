@@ -4,7 +4,7 @@ import {
   getNumericDate,
 } from "https://deno.land/x/djwt@v2.4/mod.ts";
 import config from "../config.ts";
-import { isExistedFile, resolvePath } from "./path.ts";
+import { isFileExisted, resolvePath } from "./path.ts";
 import {
   encode,
   decode,
@@ -17,7 +17,7 @@ const usages: KeyUsage[] = ["sign", "verify"];
 async function generateKey() {
   if (jwtKey) return jwtKey;
 
-  const existed = await isExistedFile(resolvePath(config.jwtKeyFile));
+  const existed = await isFileExisted(resolvePath(config.jwtKeyFile));
   if (existed) {
     const content = await Deno.readTextFile(config.jwtKeyFile);
     const binary = decode(content).buffer;

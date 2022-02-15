@@ -1,4 +1,4 @@
-import { HTTPMethods } from "https://deno.land/x/oak@v10.2.0/mod.ts";
+import { HTTPMethods, Status } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { Router } from "https://deno.land/x/oak@v10.2.0/router.ts";
 import * as fs from "https://deno.land/std@0.125.0/fs/mod.ts";
 import { Md5 } from "https://deno.land/std@0.125.0/hash/md5.ts";
@@ -11,6 +11,7 @@ import {
 import { validateBody } from "../utils/validate.ts";
 import { resolvePath } from "../utils/path.ts";
 import * as users from "../users.ts";
+import isAdmin from "../middlewares/is-admin.ts";
 import jwtAuthentication from "../middlewares/jwt-authentication.ts";
 import config from "../config.ts";
 
@@ -25,14 +26,19 @@ const createUserSchema = {
   username: [required, match(/^[0-9a-z]{3,36}$/)],
 };
 
-privateRouter.post("/users", async (ctx) => {
+privateRouter.post("/users", isAdmin(), async (ctx) => {
   const body: CreateUserBody = await validateBody(ctx, createUserSchema);
 
-  const password = Math.random().toString(36).slice(0, 8);
+  const password = Math.random().toString(36).slice(2);
   const passwordMd5 = new Md5()
     .update(password + config.passwordSalt)
     .toString();
-  await users.add({ username: body.username, password: passwordMd5 });
+
+  try {
+    await users.add({ username: body.username, password: passwordMd5 });
+  } catch (error) {
+    return ctx.throw(Status.BadRequest, error.message);
+  }
 
   ctx.response.body = {
     status: "ok",
@@ -45,6 +51,12 @@ privateRouter.get("/users", async (ctx) => {
     status: "ok",
     users: await users.list(),
   };
+});
+
+privateRouter.delete("/users/:username", isAdmin(), async (ctx) => {
+  await users.remove(ctx.params["username"]);
+
+  ctx.response.body = { status: "ok" };
 });
 
 type CreateFunctionBody = {

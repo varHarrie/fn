@@ -10,7 +10,7 @@ export function resolvePath(...paths: string[]) {
     : path.join(root, ...paths);
 }
 
-export async function isExistedFile(path: string) {
+export async function isFileExisted(path: string) {
   try {
     const info = await Deno.stat(path);
     return info.isFile;

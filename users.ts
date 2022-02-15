@@ -1,12 +1,20 @@
 import config from "./config.ts";
 import { User } from "./models/user.ts";
-import { resolvePath } from "./utils/path.ts";
+import { resolvePath, isFileExisted } from "./utils/path.ts";
 
 let users: User[] = [];
 
 async function load() {
-  const json = await Deno.readTextFile(resolvePath(config.usersFile));
-  users = JSON.parse(json);
+  const filePath = resolvePath(config.usersFile);
+  const existed = await isFileExisted(filePath);
+
+  if (existed) {
+    const json = await Deno.readTextFile(filePath);
+    users = JSON.parse(json);
+  } else {
+    users = [{ username: "admin", password: "" }];
+    save();
+  }
 }
 
 async function save() {
@@ -39,5 +47,12 @@ export async function add(payload: User) {
   if (user) throw new Error("User existed");
 
   users.push(payload);
+  await save();
+}
+
+export async function remove(username: string) {
+  if (!users.length) await load();
+
+  users = users.filter((u) => u.username !== username);
   await save();
 }
