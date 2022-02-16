@@ -1,6 +1,6 @@
 import config from "./config.ts";
 import { User } from "./models/user.ts";
-import { resolvePath, isFileExisted } from "./utils/path.ts";
+import { resolvePath, isFileExisted } from "./utils/fs.ts";
 
 let users: User[] = [];
 

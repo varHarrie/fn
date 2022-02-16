@@ -4,7 +4,7 @@ import {
   getNumericDate,
 } from "https://deno.land/x/djwt@v2.4/mod.ts";
 import config from "../config.ts";
-import { isFileExisted, resolvePath } from "./path.ts";
+import { isFileExisted, resolvePath } from "./fs.ts";
 import {
   encode,
   decode,

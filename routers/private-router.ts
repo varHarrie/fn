@@ -1,6 +1,12 @@
+import { getQuery } from "https://deno.land/x/oak@v10.2.0/helpers.ts";
 import { HTTPMethods, Status } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { Router } from "https://deno.land/x/oak@v10.2.0/router.ts";
-import * as fs from "https://deno.land/std@0.125.0/fs/mod.ts";
+import { ensureDir } from "https://deno.land/std@0.125.0/fs/mod.ts";
+import {
+  dirname,
+  basename,
+  relative,
+} from "https://deno.land/std@0.125.0/path/mod.ts";
 import { Md5 } from "https://deno.land/std@0.125.0/hash/md5.ts";
 import {
   match,
@@ -9,7 +15,7 @@ import {
   required,
 } from "https://deno.land/x/validasaur@v0.15.0/mod.ts";
 import { validateBody } from "../utils/validate.ts";
-import { resolvePath } from "../utils/path.ts";
+import { getFile, isFileExisted, listFiles, resolvePath } from "../utils/fs.ts";
 import * as users from "../users.ts";
 import isAdmin from "../middlewares/is-admin.ts";
 import jwtAuthentication from "../middlewares/jwt-authentication.ts";
@@ -80,10 +86,85 @@ privateRouter.post("/functions", async (ctx) => {
   const dirPath = resolvePath(config.functionDir, body.url);
   const filePath = dirPath + "/" + body.method + ".js";
 
-  await fs.ensureDir(dirPath);
+  await ensureDir(dirPath);
   await Deno.writeTextFile(filePath, body.code);
 
   ctx.response.body = { status: "ok", method: body.method, url: body.url };
+});
+
+type DeleteFunctionBody = {
+  method: HTTPMethods;
+  url: string;
+};
+
+const deleteFunctionSchema = {
+  method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
+  url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*$/)],
+};
+
+privateRouter.delete("/functions", async (ctx) => {
+  const body: DeleteFunctionBody = await validateBody(
+    ctx,
+    deleteFunctionSchema
+  );
+
+  const filePath = resolvePath(
+    config.functionDir,
+    body.url,
+    body.method + ".js"
+  );
+
+  if (await isFileExisted(filePath)) {
+    await Deno.remove(filePath);
+  }
+
+  ctx.response.body = { status: "ok", method: body.method, url: body.url };
+});
+
+privateRouter.get("/functions", async (ctx) => {
+  const { method, url } = getQuery(ctx);
+
+  if (method !== undefined && url !== undefined) {
+    const filePath = resolvePath(config.functionDir, url, method + ".js");
+    const existed = await isFileExisted(filePath);
+
+    if (!existed) {
+      return ctx.throw(Status.NotFound, "Function not found");
+    }
+
+    const [file, code] = await Promise.all([
+      getFile(filePath),
+      Deno.readTextFile(filePath),
+    ]);
+
+    ctx.response.body = {
+      status: "ok",
+      function: {
+        method,
+        url,
+        code,
+        createdAt: file?.createdAt,
+        modifiedAt: file?.modifiedAt,
+        size: file?.size,
+      },
+    };
+  } else {
+    const files = await listFiles(resolvePath(config.functionDir), (filePath) =>
+      /\/(GET|POST|PUT|PATCH|DELETE).js$/.test(filePath)
+    );
+
+    const functions = files.map((file) => {
+      return {
+        method: basename(file.path).replace(/.js$/, ""),
+        url: dirname(relative(config.functionDir, file.path)),
+        createdAt: file.createdAt,
+        modifiedAt: file.modifiedAt,
+        size: file.size,
+      };
+    });
+
+    ctx.response.body = { status: "ok", functions };
+  }
 });
 
 export default privateRouter;

@@ -1,7 +1,7 @@
 import { Context, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { getQuery } from "https://deno.land/x/oak@v10.2.0/helpers.ts";
 import { Status } from "https://deno.land/std@0.123.0/http/http_status.ts";
-import { resolvePath } from "../utils/path.ts";
+import { resolvePath } from "../utils/fs.ts";
 import Container from "../utils/container/index.ts";
 import config from "../config.ts";
 
