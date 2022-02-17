@@ -1,6 +1,5 @@
 import { getQuery } from "https://deno.land/x/oak@v10.2.0/helpers.ts";
-import { HTTPMethods, Status } from "https://deno.land/x/oak@v10.2.0/mod.ts";
-import { Router } from "https://deno.land/x/oak@v10.2.0/router.ts";
+import { Router, Status } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.125.0/fs/mod.ts";
 import {
   dirname,
@@ -16,6 +15,7 @@ import {
 } from "https://deno.land/x/validasaur@v0.15.0/mod.ts";
 import { validateBody } from "../utils/validate.ts";
 import { getFile, isFileExisted, listFiles, resolvePath } from "../utils/fs.ts";
+import { FunctionMethod } from "./../models.ts";
 import * as users from "../users.ts";
 import isAdmin from "../middlewares/is-admin.ts";
 import jwtAuthentication from "../middlewares/jwt-authentication.ts";
@@ -66,7 +66,7 @@ privateRouter.delete("/users/:username", isAdmin(), async (ctx) => {
 });
 
 type CreateFunctionBody = {
-  method: HTTPMethods;
+  method: FunctionMethod;
   url: string;
   code: string;
 };
@@ -93,7 +93,7 @@ privateRouter.post("/functions", async (ctx) => {
 });
 
 type DeleteFunctionBody = {
-  method: HTTPMethods;
+  method: FunctionMethod;
   url: string;
 };
 
