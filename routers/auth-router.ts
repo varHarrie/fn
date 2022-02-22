@@ -7,7 +7,7 @@ import {
 } from "https://deno.land/x/validasaur@v0.15.0/mod.ts";
 import { validateBody } from "../utils/validate.ts";
 import { generateJwt } from "../utils/jwt.ts";
-import * as users from "../users.ts";
+import store from "../store.ts";
 import config from "../config.ts";
 
 const authRouter = new Router({ prefix: "/api" });
@@ -28,7 +28,7 @@ authRouter.post("/login", async (ctx) => {
     body.password &&
     new Md5().update(body.password + config.passwordSalt).toString();
 
-  const user = await users.get(body.username);
+  const user = await store.users.findOne({ username: body.username });
 
   if (!user) {
     return ctx.throw(Status.BadRequest, "User not found");

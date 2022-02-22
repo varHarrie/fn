@@ -4,7 +4,7 @@ import { config as env } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
 const config: DenonConfig = {
   allow: ["env", "net", "read", "write"],
   watcher: {
-    skip: [".git/**", "dist/**", "functions/**", "users.json", "jwt.key"],
+    skip: [".git/**", "dist/**", "data/**", "jwt.key"],
   },
   scripts: {
     dev: {

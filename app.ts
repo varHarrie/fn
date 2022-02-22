@@ -5,6 +5,7 @@ import authRouter from "./routers/auth-router.ts";
 import privateRouter from "./routers/private-router.ts";
 import publicRouter from "./routers/public-router.ts";
 import config from "./config.ts";
+import store from "./store.ts";
 
 const app = new Application();
 
@@ -26,4 +27,5 @@ app.addEventListener("listen", ({ hostname, port, secure }) => {
   );
 });
 
+await store.load();
 await app.listen(`${config.host}:${config.port}`);

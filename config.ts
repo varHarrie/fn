@@ -4,7 +4,7 @@ const config = {
   passwordSalt: Deno.env.get("PASSWORD_SALT") ?? "",
   jwtExpires: parseInt(Deno.env.get("JWT_EXPIRES") ?? "86400"),
   jwtKeyFile: Deno.env.get("JWT_KEY_FILE") ?? "jwt.key",
-  usersFile: Deno.env.get("USERS_FILE") ?? "data/users.json",
+  storeFile: Deno.env.get("STORE_FILE") ?? "data/store.json",
   functionDir: Deno.env.get("FUNCTION_DIR") ?? "data/functions",
   functionTimeout: parseInt(Deno.env.get("FUNCTION_TIMEOUT") ?? "1500"),
 };

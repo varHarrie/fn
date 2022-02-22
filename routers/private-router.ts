@@ -16,7 +16,7 @@ import {
 import { validateBody } from "../utils/validate.ts";
 import { getFile, isFileExisted, listFiles, resolvePath } from "../utils/fs.ts";
 import { FunctionMethod } from "./../models.ts";
-import * as users from "../users.ts";
+import store from "../store.ts";
 import isAdmin from "../middlewares/is-admin.ts";
 import jwtAuthentication from "../middlewares/jwt-authentication.ts";
 import config from "../config.ts";
@@ -41,7 +41,10 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
     .toString();
 
   try {
-    await users.add({ username: body.username, password: passwordMd5 });
+    await store.users.insert({
+      username: body.username,
+      password: passwordMd5,
+    });
   } catch (error) {
     return ctx.throw(Status.BadRequest, error.message);
   }
@@ -55,12 +58,13 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
 privateRouter.get("/users", async (ctx) => {
   ctx.response.body = {
     status: "ok",
-    users: await users.list(),
+    users: await store.users.find(),
   };
 });
 
 privateRouter.delete("/users/:username", isAdmin(), async (ctx) => {
-  await users.remove(ctx.params["username"]);
+  const username = ctx.params["username"];
+  await store.users.remove({ username });
 
   ctx.response.body = { status: "ok" };
 });
