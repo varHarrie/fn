@@ -2,7 +2,7 @@ import { Context, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { getQuery } from "https://deno.land/x/oak@v10.2.0/helpers.ts";
 import { Status } from "https://deno.land/std@0.123.0/http/http_status.ts";
 import { resolvePath } from "../utils/fs.ts";
-import Container from "../utils/container/index.ts";
+import sandbox from "../utils/sandbox-instance.ts";
 import config from "../config.ts";
 
 const publicRouter = new Router();
@@ -44,12 +44,14 @@ publicRouter.all("/f/:url+", async (ctx) => {
     );
   }
 
-  const container = new Container();
   const context = await createContext(ctx);
-  const options = { timeout: config.functionTimeout };
 
   try {
-    result = await container.execute(code, context, options);
+    result = await sandbox.execute({
+      code,
+      context,
+      timeout: config.functionTimeout,
+    });
   } catch (error) {
     return ctx.throw(
       Status.InternalServerError,

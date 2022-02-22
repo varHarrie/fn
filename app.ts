@@ -1,4 +1,5 @@
 import { Application } from "https://deno.land/x/oak@v10.2.0/mod.ts";
+import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import requestLogger from "./middlewares/request-logger.ts";
 import errorHandler from "./middlewares/error-handler.ts";
 import authRouter from "./routers/auth-router.ts";
@@ -9,6 +10,7 @@ import store from "./store.ts";
 
 const app = new Application();
 
+app.use(oakCors());
 app.use(requestLogger());
 app.use(errorHandler());
 

@@ -22,3 +22,5 @@ self.addEventListener("message", async (e) => {
     self.postMessage({ type: "result", data });
   }
 });
+
+export {};
