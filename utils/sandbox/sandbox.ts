@@ -31,6 +31,8 @@ export class Sandbox {
         }
       );
 
+      worker.done = this.#onWorkerDone;
+
       this.#workers.push(worker);
       return worker;
     }
@@ -38,9 +40,12 @@ export class Sandbox {
     return undefined;
   }
 
-  #run() {
+  #onWorkerDone = () => {
     this.#arrangeWorkers();
+    this.#run();
+  };
 
+  #run() {
     const worker = this.#getIdleWorker();
     if (!worker) return;
 

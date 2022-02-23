@@ -8,6 +8,7 @@ export enum WorkerState {
 
 export class ScriptWorker {
   state: WorkerState;
+  done?: () => void;
   #worker: Worker;
   #runningScript: Script | undefined;
 
@@ -34,6 +35,7 @@ export class ScriptWorker {
       this.#runningScript.resolve(value);
       this.#runningScript = undefined;
       this.state = WorkerState.Idle;
+      this.done?.();
     }
   }
 
@@ -43,6 +45,7 @@ export class ScriptWorker {
       this.#runningScript.reject(reason);
       this.#runningScript = undefined;
       this.state = WorkerState.Idle;
+      this.done?.();
     }
   }
 
