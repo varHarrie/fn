@@ -16,6 +16,7 @@ import {
 import { validateBody } from "../utils/validate.ts";
 import { getFile, isFileExisted, listFiles, resolvePath } from "../utils/fs.ts";
 import { FunctionMethod } from "./../models.ts";
+import { functionCache } from "../cache.ts";
 import store from "../store.ts";
 import isAdmin from "../middlewares/is-admin.ts";
 import jwtAuthentication from "../middlewares/jwt-authentication.ts";
@@ -92,6 +93,7 @@ privateRouter.post("/functions", async (ctx) => {
 
   await ensureDir(dirPath);
   await Deno.writeTextFile(filePath, body.code);
+  functionCache.set(filePath, body.code);
 
   ctx.response.body = { status: "ok", method: body.method, url: body.url };
 });
@@ -117,6 +119,8 @@ privateRouter.delete("/functions", async (ctx) => {
     body.url,
     body.method + ".js"
   );
+
+  functionCache.delete(filePath);
 
   if (await isFileExisted(filePath)) {
     await Deno.remove(filePath);
