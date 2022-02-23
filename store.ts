@@ -1,7 +1,7 @@
 import {
   Persiston,
   FileAdapter,
-} from "https://raw.githubusercontent.com/varHarrie/persiston/master/mod.ts";
+} from "https://deno.land/x/persiston@v0.1.0/mod.ts";
 import config from "./config.ts";
 import { User } from "./models.ts";
 import { resolvePath } from "./utils/fs.ts";
