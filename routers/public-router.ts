@@ -3,7 +3,7 @@ import { getQuery } from "https://deno.land/x/oak@v10.2.0/helpers.ts";
 import { Status } from "https://deno.land/std@0.123.0/http/http_status.ts";
 import { resolvePath } from "../utils/fs.ts";
 import { functionCache } from "../cache.ts";
-import sandbox from "../utils/sandbox-instance.ts";
+import sandbox from "../utils/sandbox.ts";
 import config from "../config.ts";
 
 const publicRouter = new Router();
@@ -54,7 +54,7 @@ publicRouter.all("/f/:url+", async (ctx) => {
   try {
     result = await sandbox.execute({
       code,
-      context,
+      args: [context],
       timeout: config.functionTimeout,
     });
   } catch (error) {
