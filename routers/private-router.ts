@@ -13,7 +13,7 @@ import {
   isIn,
   required,
 } from "https://deno.land/x/validasaur@v0.15.0/mod.ts";
-import { validateBody } from "../utils/validate.ts";
+import { validateBody, validateQuery } from "../utils/validate.ts";
 import { getFile, isFileExisted, listFiles, resolvePath } from "../utils/fs.ts";
 import { FunctionMethod } from "./../models.ts";
 import { functionCache } from "../cache.ts";
@@ -21,6 +21,7 @@ import store from "../store.ts";
 import isAdmin from "../middlewares/is-admin.ts";
 import jwtAuthentication from "../middlewares/jwt-authentication.ts";
 import config from "../config.ts";
+import schedulerManager from "../scheduler-manager.ts";
 
 const privateRouter = new Router({ prefix: "/api" });
 privateRouter.use(jwtAuthentication());
@@ -52,7 +53,10 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
 
   ctx.response.body = {
     status: "ok",
-    password,
+    user: {
+      username: body.username,
+      password,
+    },
   };
 });
 
@@ -95,13 +99,11 @@ privateRouter.post("/functions", async (ctx) => {
   await Deno.writeTextFile(filePath, body.code);
   functionCache.set(filePath, body.code);
 
-  ctx.response.body = { status: "ok", method: body.method, url: body.url };
+  ctx.response.body = {
+    status: "ok",
+    function: { method: body.method, url: body.url },
+  };
 });
-
-type DeleteFunctionBody = {
-  method: FunctionMethod;
-  url: string;
-};
 
 const deleteFunctionSchema = {
   method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
@@ -109,15 +111,12 @@ const deleteFunctionSchema = {
 };
 
 privateRouter.delete("/functions", async (ctx) => {
-  const body: DeleteFunctionBody = await validateBody(
-    ctx,
-    deleteFunctionSchema
-  );
+  const query = await validateQuery(ctx, deleteFunctionSchema);
 
   const filePath = resolvePath(
     config.functionDir,
-    body.url,
-    body.method + ".js"
+    query.url,
+    query.method + ".js"
   );
 
   functionCache.delete(filePath);
@@ -126,7 +125,7 @@ privateRouter.delete("/functions", async (ctx) => {
     await Deno.remove(filePath);
   }
 
-  ctx.response.body = { status: "ok", method: body.method, url: body.url };
+  ctx.response.body = { status: "ok" };
 });
 
 privateRouter.get("/functions", async (ctx) => {
@@ -173,6 +172,56 @@ privateRouter.get("/functions", async (ctx) => {
 
     ctx.response.body = { status: "ok", functions };
   }
+});
+
+privateRouter.get("/schedulers", async (ctx) => {
+  ctx.response.body = {
+    status: "ok",
+    users: await store.schedulers.find(),
+  };
+});
+
+type CreateSchedulerBody = {
+  name: string;
+  frequency: string;
+  method: FunctionMethod;
+  url: string;
+};
+
+const createSchedulerSchema = {
+  name: [required, isString],
+  frequency: [required, match(/^(((\*|\d+|\d+-\d+)(\/\d+)?,?)\s?){5}$/)],
+  method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
+  url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*$/)],
+};
+
+privateRouter.post("/schedulers", async (ctx) => {
+  const body: CreateSchedulerBody = await validateBody(
+    ctx,
+    createSchedulerSchema
+  );
+
+  const scheduler = { id: crypto.randomUUID(), ...body };
+
+  try {
+    await store.schedulers.insert(scheduler);
+    schedulerManager.add(scheduler);
+  } catch (error) {
+    return ctx.throw(Status.BadRequest, error.message);
+  }
+
+  ctx.response.body = { status: "ok", scheduler };
+});
+
+privateRouter.delete("/schedulers", async (ctx) => {
+  const id = ctx.params["id"];
+
+  if (id) {
+    await store.schedulers.removeOne({ id });
+    schedulerManager.remove(id);
+  }
+
+  ctx.response.body = { status: "ok" };
 });
 
 export default privateRouter;

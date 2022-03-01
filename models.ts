@@ -11,7 +11,8 @@ export type User = {
   password: string;
 };
 
-export type scheduler = {
+export type Scheduler = {
+  id: string;
   name: string;
   frequency: string;
   method: FunctionMethod;

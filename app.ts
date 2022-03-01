@@ -5,14 +5,15 @@ import errorHandler from "./middlewares/error-handler.ts";
 import authRouter from "./routers/auth-router.ts";
 import privateRouter from "./routers/private-router.ts";
 import publicRouter from "./routers/public-router.ts";
+import schedulerManager from "./scheduler-manager.ts";
 import config from "./config.ts";
 import store from "./store.ts";
 
 const app = new Application();
 
-app.use(oakCors());
 app.use(requestLogger());
 app.use(errorHandler());
+app.use(oakCors());
 
 app.use(authRouter.routes());
 app.use(authRouter.allowedMethods());
@@ -24,10 +25,12 @@ app.use(publicRouter.routes());
 app.use(publicRouter.allowedMethods());
 
 app.addEventListener("listen", ({ hostname, port, secure }) => {
-  console.log(
-    `⚡Running at ${secure ? "https" : "http"}://${hostname}:${port}`
-  );
+  const origin = `${secure ? "https" : "http"}://${hostname}:${port}`;
+
+  schedulerManager.bootstrap(origin);
+  console.log(`⚡Running at ${origin}`);
 });
 
 await store.load();
+
 await app.listen(`${config.host}:${config.port}`);
