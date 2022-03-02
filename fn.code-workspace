@@ -1,0 +1,11 @@
+{
+  "folders": [
+	{
+		"path": "fn-admin"
+	},
+	{
+		"path": "fn-server"
+	}
+],
+  "settings": {}
+}
