@@ -12,11 +12,14 @@ export default function errorHandler() {
       console.log(error);
 
       if (isHttpError(error)) {
-        throw error;
+        ctx.response.status = error.status;
+        ctx.response.body = error.message;
       } else if (Error instanceof Error) {
-        ctx.throw(Status.InternalServerError, error.message);
+        ctx.response.status = Status.InternalServerError;
+        ctx.response.body = error.message;
       } else {
-        ctx.throw(Status.InternalServerError, "Unknown");
+        ctx.response.status = Status.InternalServerError;
+        ctx.response.body = "Unknown";
       }
     }
   };
