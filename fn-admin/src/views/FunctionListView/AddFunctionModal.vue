@@ -84,7 +84,7 @@ const form = reactive<FormProps>({
     url: [
       { required: true, whitespace: true, message: "请填写URL" },
       {
-        pattern: /^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*$/,
+        pattern: /^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*(\.(js|ts))?$/,
         message: "URL格式不正确",
       },
     ],

@@ -86,7 +86,7 @@ type CreateFunctionBody = {
 
 const createFunctionSchema = {
   method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
-  url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*$/)],
+  url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*(\.(js|ts))?$/)],
   code: [required, isString],
 };
 
