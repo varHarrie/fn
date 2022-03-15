@@ -9,7 +9,7 @@
         <NButton
           block
           type="primary"
-          :disabled="fn.code !== code"
+          :disabled="fn.code === code"
           @click="onSave"
           >保存</NButton
         >
