@@ -1,3 +1,4 @@
+import { Md5 } from "https://deno.land/std@0.125.0/hash/md5.ts";
 import {
   Persiston,
   FileAdapter,
@@ -17,7 +18,12 @@ export default new Store({
   adapter,
   getInitialData: () => {
     return {
-      users: [{ username: "admin", password: "" }],
+      users: [
+        {
+          username: "admin",
+          password: new Md5().update("123456" + config.passwordSalt).toString(),
+        },
+      ],
       schedulers: [],
     };
   },

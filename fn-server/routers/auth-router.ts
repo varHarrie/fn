@@ -43,7 +43,7 @@ authRouter.post("/login", async (ctx) => {
     config.jwtExpires
   );
 
-  ctx.response.body = { status: "ok", token };
+  ctx.response.body = { token };
 });
 
 export default authRouter;

@@ -11,7 +11,7 @@ export async function validateQuery(ctx: Context, schema: ValidationRules) {
   const [valid, errors] = await validate(query, schema);
 
   if (!valid) {
-    ctx.throw(Status.BadRequest, JSON.stringify(firstMessages(errors)));
+    return ctx.throw(Status.BadRequest, JSON.stringify(firstMessages(errors)));
   }
 
   return query;
@@ -22,7 +22,7 @@ export async function validateBody(ctx: Context, schema: ValidationRules) {
   const [valid, errors] = await validate(body, schema);
 
   if (!valid) {
-    ctx.throw(Status.BadRequest, JSON.stringify(firstMessages(errors)));
+    return ctx.throw(Status.BadRequest, JSON.stringify(firstMessages(errors)));
   }
 
   return body;

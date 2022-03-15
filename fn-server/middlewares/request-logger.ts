@@ -20,9 +20,9 @@ const methodColors: Record<HTTPMethods, (text: string) => string> = {
 
 export default function requestLogger() {
   return async (ctx: Context, next: () => Promise<unknown>) => {
-    const start = Date.now();
+    const start = performance.now();
     await next();
-    const ms = Date.now() - start;
+    const ms = performance.now() - start;
 
     const { status } = ctx.response;
     const { method, url } = ctx.request;

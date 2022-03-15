@@ -26,6 +26,12 @@ import schedulerManager from "../scheduler-manager.ts";
 const privateRouter = new Router({ prefix: "/api" });
 privateRouter.use(jwtAuthentication());
 
+privateRouter.get("/me", (ctx) => {
+  ctx.response.body = {
+    user: { username: ctx.state.username },
+  };
+});
+
 type CreateUserBody = {
   username: string;
 };
@@ -52,7 +58,6 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
   }
 
   ctx.response.body = {
-    status: "ok",
     user: {
       username: body.username,
       password,
@@ -62,7 +67,6 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
 
 privateRouter.get("/users", async (ctx) => {
   ctx.response.body = {
-    status: "ok",
     users: await store.users.find(),
   };
 });
@@ -71,7 +75,7 @@ privateRouter.delete("/users/:username", isAdmin(), async (ctx) => {
   const username = ctx.params["username"];
   await store.users.remove({ username });
 
-  ctx.response.body = { status: "ok" };
+  ctx.response.body = {};
 });
 
 type CreateFunctionBody = {
@@ -100,7 +104,6 @@ privateRouter.post("/functions", async (ctx) => {
   functionCache.set(filePath, body.code);
 
   ctx.response.body = {
-    status: "ok",
     function: { method: body.method, url: body.url },
   };
 });
@@ -125,7 +128,7 @@ privateRouter.delete("/functions", async (ctx) => {
     await Deno.remove(filePath);
   }
 
-  ctx.response.body = { status: "ok" };
+  ctx.response.body = {};
 });
 
 privateRouter.get("/functions", async (ctx) => {
@@ -145,7 +148,6 @@ privateRouter.get("/functions", async (ctx) => {
     ]);
 
     ctx.response.body = {
-      status: "ok",
       function: {
         method,
         url,
@@ -170,14 +172,13 @@ privateRouter.get("/functions", async (ctx) => {
       };
     });
 
-    ctx.response.body = { status: "ok", functions };
+    ctx.response.body = { functions };
   }
 });
 
 privateRouter.get("/schedulers", async (ctx) => {
   ctx.response.body = {
-    status: "ok",
-    users: await store.schedulers.find(),
+    schedulers: await store.schedulers.find(),
   };
 });
 
@@ -210,18 +211,18 @@ privateRouter.post("/schedulers", async (ctx) => {
     return ctx.throw(Status.BadRequest, error.message);
   }
 
-  ctx.response.body = { status: "ok", scheduler };
+  ctx.response.body = { scheduler };
 });
 
 privateRouter.delete("/schedulers", async (ctx) => {
-  const id = ctx.params["id"];
+  const id = getQuery(ctx)["id"];
 
   if (id) {
     await store.schedulers.removeOne({ id });
     schedulerManager.remove(id);
   }
 
-  ctx.response.body = { status: "ok" };
+  ctx.response.body = {};
 });
 
 export default privateRouter;
