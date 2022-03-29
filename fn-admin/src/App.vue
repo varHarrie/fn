@@ -1,9 +1,11 @@
 <template>
-  <NConfigProvider abstract :theme-overrides="themeOverrides">
+  <NConfigProvider abstract :theme-overrides="themeOverrides" :locale="locale">
     <NLoadingBarProvider>
       <NMessageProvider>
         <NDialogProvider>
-          <RouterView />
+          <RequestErrorHandler>
+            <RouterView />
+          </RequestErrorHandler>
         </NDialogProvider>
       </NMessageProvider>
     </NLoadingBarProvider>
@@ -12,30 +14,46 @@
 
 <script setup lang="ts">
 import {
+  type GlobalThemeOverrides,
+  createLocale,
   NConfigProvider,
   NDialogProvider,
   NLoadingBarProvider,
   NMessageProvider,
+  zhCN,
 } from "naive-ui";
 
-import type { RequestFailEvent } from "./apis/http";
+import RequestErrorHandler from "./components/RequestErrorHandler/RequestErrorHandler.vue";
 
-const themeOverrides = {
+const themeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: "#008eff",
-    primaryColorHover: "#037DE0",
-    primaryColorPressed: "#2EA1FF",
-    primaryColorSuppl: "#008eff",
+    primaryColor: "#465FF9",
+    primaryColorHover: "#576CF4",
+    primaryColorPressed: "#374FEC",
+    primaryColorSuppl: "#465FF9",
+    infoColor: "#53A8FE", // #7393FF
+    infoColorHover: "#65AFF8",
+    infoColorPressed: "#3F92E6",
+    infoColorSuppl: "#53A8FE",
+    successColor: "#43D5B3", // #00DD8C
+    successColorHover: "#4DDFBD",
+    successColorPressed: "#38C7A5",
+    successColorSuppl: "#43D5B3",
+    errorColor: "#F25C50", // #FF737B
+    errorColorHover: "#F25C50",
+    errorColorPressed: "#F25C50",
+    errorColorSuppl: "#F25C50",
+    warningColor: "#FFB74D", // #F8AD39
+    warningColorHover: "#FFB74D",
+    warningColorPressed: "#FFB74D",
+    warningColorSuppl: "#FFB74D",
   },
 };
 
-window.addEventListener("request-fail", (e) => {
-  const { status } = (e as RequestFailEvent).detail;
-
-  if (status === 401) {
-    location.replace(
-      `/login?redirect=${encodeURIComponent(location.pathname)}`
-    );
-  }
-});
+const locale = createLocale(
+  {
+    Input: { placeholder: "" },
+  },
+  zhCN
+);
 </script>

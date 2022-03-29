@@ -8,6 +8,7 @@
     :loading="loading"
     @positive-click="onOk"
     @negative-click="onCancel"
+    @close="onCancel"
   >
     <NForm :ref="form.setRef" :model="form.model" :rules="form.rules">
       <NFormItem label="名称" path="name">

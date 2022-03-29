@@ -1,163 +1,194 @@
 <template>
   <div class="function-list-view">
-    <div class="side">
-      <NButton block type="primary" :disabled="loading" @click="onShowAddModal">
-        <template #icon>
-          <NIcon>
-            <IconAdd />
-          </NIcon>
-        </template>
-        新增函数
-      </NButton>
-      <div class="list">
-        <NSpin v-model:show="loading">
-          <RouterLink
-            v-for="fn of functions"
-            :key="fn.method + fn.url"
-            :to="`/functions/${fn.method}/${fn.url}`"
-            class="item"
-          >
-            <span class="method" :class="fn.method">{{
-              fn.method.slice(0, 3)
-            }}</span>
-            <span class="url">{{ "/" + fn.url }}</span>
-          </RouterLink>
-        </NSpin>
+    <div class="container">
+      <div class="side">
+        <div class="head">
+          <NInput>
+            <template #prefix>
+              <NIcon :component="IconSearch" />
+            </template>
+          </NInput>
+          <NButton secondary type="primary" :disabled="loading" @click="onAdd">
+            <template #icon>
+              <NIcon :component="IconAdd" />
+            </template>
+          </NButton>
+        </div>
+        <div class="list">
+          <NSpin v-model:show="loading">
+            <RouterLink
+              v-for="fn of functions"
+              :key="fn.id"
+              :to="`/functions/${fn.id}`"
+              class="item"
+            >
+              <span class="method" :class="fn.method">
+                {{ fn.method.slice(0, 3) }}
+              </span>
+              <span class="url">{{ "/" + fn.url }}</span>
+            </RouterLink>
+          </NSpin>
+        </div>
+      </div>
+      <div class="main">
+        <Placeholder :icon="IconSelect" text="请选择函数">
+          <RouterView v-if="route.name !== 'functions'" @refresh="onRefresh" />
+        </Placeholder>
       </div>
     </div>
-    <div class="main">
-      <NEmpty v-if="route.name === 'functions'" size="large">请选择函数</NEmpty>
-      <RouterView v-else />
-    </div>
-    <AddFunctionModal v-model:show="addModal.show" @ok="onAddModalOk" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { NButton, NEmpty, NIcon, NSpin, useThemeVars } from "naive-ui";
-import { reactive, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { NButton, NIcon, NInput, NSpin, useThemeVars } from "naive-ui";
+import { transparentize } from "polished";
+import { onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 import { functionApi } from "/@/apis/function-api";
+import Placeholder from "/@/components/Placeholder";
 import useHandling from "/@/compositions/use-handling";
-import router from "/@/router";
 import type { FunctionModel } from "/@/store/models";
-import IconAdd from "~icons/ri/add-line";
-
-import AddFunctionModal from "./AddFunctionModal.vue";
+import IconSelect from "~icons/mdi/cursor-default-click-outline";
+import IconSearch from "~icons/mdi/magnify";
+import IconAdd from "~icons/mdi/plus";
 
 const route = useRoute();
+const router = useRouter();
+
 const theme = useThemeVars();
+const itemActiveBg = transparentize(0.9, theme.value.primaryColor);
+
 const functions = ref<FunctionModel[]>([]);
 
 const [loading, load] = useHandling(async () => {
   functions.value = await functionApi.list();
 });
 
-watch(
-  () => route.name,
-  (name, oldName) => {
-    if (!oldName || name === "functions") {
-      load();
-    }
-  },
-  { immediate: true }
-);
+onMounted(() => load());
+const onRefresh = () => load();
 
-const addModal = reactive({
-  show: false,
-});
-
-const onShowAddModal = () => {
-  addModal.show = true;
-};
-
-const onAddModalOk = async (fn: FunctionModel) => {
-  await load();
-  router.push(`/functions/${fn.method}/${fn.url}`);
+const onAdd = () => {
+  router.push({ name: "function", params: { functionId: "new" } });
 };
 </script>
 
 <style lang="less" scoped>
 .function-list-view {
-  padding-top: 20px;
+  padding: 20px 20px 0;
   display: flex;
+  flex-direction: column;
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
 
-  .side {
+  .container {
     display: flex;
-    flex-direction: column;
-    padding: 0 18px;
-    width: 300px;
+    flex: 1;
+    min-height: 0;
+    border: 1px solid v-bind("theme.borderColor");
+    border-radius: v-bind("theme.borderRadius");
+    background: #fff;
+    overflow: hidden;
 
-    .list {
-      margin-top: 12px;
-      padding: 12px 0;
-      flex: 1;
-      min-height: 0;
-      border-top: 1px solid v-bind("theme.borderColor");
-      overflow-y: auto;
+    .side {
+      display: flex;
+      flex-direction: column;
+      width: 300px;
 
-      .item {
-        padding: 0 12px;
+      .head {
+        padding: 12px;
         display: flex;
-        align-items: center;
-        height: 36px;
-        cursor: pointer;
-        border-radius: v-bind("theme.borderRadius");
 
-        &:hover {
-          background: v-bind("theme.buttonColor2");
-        }
-
-        &.router-link-active {
-          background: rgba(32, 128, 240, 0.16);
-        }
-
-        .method {
-          display: inline-block;
-          color: #fff;
-          font-size: 12px;
-
-          &.GET {
-            color: v-bind("theme.successColor");
-          }
-
-          &.POST {
-            color: v-bind("theme.primaryColor");
-          }
-
-          &.PUT {
-            color: v-bind("theme.warningColor");
-          }
-
-          &.PUT {
-            color: v-bind("theme.warningColor");
-          }
-
-          &.DELETE {
-            color: v-bind("theme.errorColor");
-          }
-        }
-
-        .url {
-          margin-left: 8px;
+        .n-input {
+          margin-right: 8px;
           flex: 1;
           min-width: 0;
-          color: v-bind("theme.textColor2");
-          word-break: keep-all;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        }
+      }
+
+      .list {
+        flex: 1;
+        min-height: 0;
+        border-top: 1px solid v-bind("theme.dividerColor");
+        overflow-y: auto;
+
+        .item {
+          position: relative;
+          padding: 0 12px;
+          display: flex;
+          align-items: center;
+          height: 48px;
+          cursor: pointer;
+
+          &:hover {
+            background: v-bind("theme.buttonColor2");
+          }
+
+          &.router-link-active {
+            background: v-bind("itemActiveBg");
+
+            &::after {
+              position: absolute;
+              top: 0;
+              left: 0;
+              display: block;
+              width: 3px;
+              height: 100%;
+              content: "";
+              background-color: v-bind("theme.primaryColorHover");
+            }
+          }
+
+          .method {
+            display: inline-block;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+
+            &.GET {
+              color: v-bind("theme.successColor");
+            }
+
+            &.POST {
+              color: v-bind("theme.primaryColor");
+            }
+
+            &.PUT {
+              color: v-bind("theme.warningColor");
+            }
+
+            &.PATCH {
+              color: v-bind("theme.warningColor");
+            }
+
+            &.DELETE {
+              color: v-bind("theme.errorColor");
+            }
+          }
+
+          .url {
+            margin-left: 8px;
+            flex: 1;
+            min-width: 0;
+            color: v-bind("theme.textColor2");
+            word-break: keep-all;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
         }
       }
     }
-  }
 
-  .main {
-    flex: 1;
-    min-width: 0;
+    .main {
+      flex: 1;
+      min-width: 0;
+
+      .placeholder {
+        box-shadow: v-bind("theme.boxShadow2"),
+          0 0 0 1px v-bind("theme.dividerColor");
+      }
+    }
   }
 }
 </style>

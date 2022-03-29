@@ -9,7 +9,6 @@
           <NInput
             v-model:value="formModel.username"
             :maxlength="30"
-            placeholder=""
             @keypress.enter="onSubmit"
           />
         </NFormItem>
@@ -18,7 +17,6 @@
             v-model:value="formModel.password"
             type="password"
             show-password-on="mousedown"
-            placeholder=""
             :maxlength="50"
             @keypress.enter="onSubmit"
           />
@@ -48,7 +46,6 @@ import { authApi } from "/@/apis/auth-api";
 
 const route = useRoute();
 const router = useRouter();
-const message = useMessage();
 const theme = useThemeVars();
 
 const formRef = ref<FormInst>();
@@ -73,15 +70,11 @@ const onSubmit = async (e: Event) => {
     return;
   }
 
-  try {
-    const token = await authApi.login(formModel);
-    localStorage.setItem("token", token);
-    const redirect =
-      decodeURIComponent((route.query.redirect ?? "") as string) || "/";
-    router.push({ path: redirect });
-  } catch (error) {
-    message.error("用户名或密码错误");
-  }
+  const token = await authApi.login(formModel);
+  localStorage.setItem("token", token);
+  const redirect =
+    decodeURIComponent((route.query.redirect ?? "") as string) || "/";
+  router.push({ path: redirect });
 };
 </script>
 

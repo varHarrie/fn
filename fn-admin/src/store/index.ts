@@ -11,6 +11,10 @@ export const useAppStore = defineStore("app", {
     async getLoginUser() {
       this.loginUser = await userApi.me();
     },
+    logout() {
+      this.loginUser = undefined;
+      localStorage.removeItem("token");
+    },
   },
 });
 

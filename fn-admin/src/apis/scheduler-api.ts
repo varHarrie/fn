@@ -18,6 +18,6 @@ export const schedulerApi = {
     return response.data.scheduler;
   },
   async delete(id: string): Promise<void> {
-    await http.delete("/api/schedulers", { params: { id } });
+    await http.delete(`/api/schedulers/${id}`);
   },
 };

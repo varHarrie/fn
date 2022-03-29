@@ -1,5 +1,7 @@
 export type UserModel = {
+  id: string;
   username: string;
+  password: string;
 };
 
 export enum FunctionMethod {
@@ -18,6 +20,7 @@ export const methodOptions = Object.entries(FunctionMethod).map(
 );
 
 export type FunctionModel = {
+  id: string;
   method: FunctionMethod;
   url: string;
   code: string;

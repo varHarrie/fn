@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             name: "function",
-            path: ":method/:url+",
+            path: ":functionId(.+)",
             component: FunctionDetailView,
           },
         ],

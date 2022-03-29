@@ -36,6 +36,9 @@ const githubLightTheme = EditorView.theme(
     "&.cm-editor.cm-focused": {
       outline: "none",
     },
+    ".cm-scroller": {
+      padding: "12px",
+    },
 
     ".cm-content": {
       caretColor: config.cursor,

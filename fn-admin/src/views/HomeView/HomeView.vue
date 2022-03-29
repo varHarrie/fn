@@ -21,10 +21,16 @@
         </div>
       </div>
       <div class="right">
-        <div class="info">
-          <div class="avatar"><IconUser /></div>
-          <span class="title">{{ appStore.loginUser.username }}</span>
-        </div>
+        <NDropdown
+          trigger="click"
+          :options="userMenu"
+          @select="onUserMenuSelect"
+        >
+          <div class="info">
+            <span class="title">{{ appStore.loginUser.username }}</span>
+            <IconDown />
+          </div>
+        </NDropdown>
       </div>
     </div>
     <RouterView />
@@ -32,32 +38,63 @@
 </template>
 
 <script lang="ts" setup>
-import { useLoadingBar, useMessage, useThemeVars } from "naive-ui";
+import {
+  NDropdown,
+  useDialog,
+  useLoadingBar,
+  useMessage,
+  useThemeVars,
+} from "naive-ui";
+import { transparentize } from "polished";
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 import { useAppStore } from "/@/store";
-import IconTeam from "~icons/ri/group-line";
-import IconFunction from "~icons/ri/stack-line";
-import IconScheduler from "~icons/ri/timer-line";
-import IconUser from "~icons/ri/user-6-line";
+import IconTeam from "~icons/mdi/account-group-outline";
+import IconDown from "~icons/mdi/chevron-down";
+import IconScheduler from "~icons/mdi/clock-outline";
+import IconFunction from "~icons/mdi/function-variant";
 
 const router = useRouter();
 const appStore = useAppStore();
 const loader = useLoadingBar();
 const message = useMessage();
+const dialog = useDialog();
 const theme = useThemeVars();
+
+const logoBg = transparentize(0.8, theme.value.primaryColor);
 
 onMounted(async () => {
   try {
     loader.start();
     await appStore.getLoginUser();
     loader.finish();
-  } catch (error) {
-    if (error instanceof Error) message.error(error.message);
+  } catch {
     router.replace("/");
   }
 });
+
+const userMenu = [
+  {
+    label: "退出登录",
+    key: "logout",
+  },
+];
+
+const onUserMenuSelect = (key: string) => {
+  if (key === "logout") {
+    dialog.info({
+      title: "确定",
+      content: "确定退出登录？",
+      positiveText: "确定",
+      onPositiveClick: async () => {
+        appStore.logout();
+        message.success("已退出登录");
+        router.replace({ name: "login" });
+      },
+    });
+  }
+};
 </script>
 
 <style lang="less" scoped>
@@ -73,7 +110,7 @@ onMounted(async () => {
     justify-content: center;
     height: 68px;
     background: #fff;
-    box-shadow: v-bind("theme.boxShadow1");
+    border: 1px solid v-bind("theme.borderColor");
     z-index: 1;
 
     .left {
@@ -90,7 +127,7 @@ onMounted(async () => {
         font-size: 24px;
         font-weight: bold;
         color: v-bind("theme.primaryColor");
-        background: #cce7ff;
+        background: v-bind("logoBg");
         border-radius: v-bind("theme.borderRadius");
         text-align: center;
       }
@@ -155,6 +192,7 @@ onMounted(async () => {
       .info {
         display: flex;
         align-items: center;
+        cursor: pointer;
 
         .avatar {
           display: flex;

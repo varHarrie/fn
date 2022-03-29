@@ -1,11 +1,10 @@
 <template>
   <div class="scheduler-list-view">
-    <div class="center">
+    <div class="container">
       <div class="header">
         <span class="title">定时器</span>
         <NButton type="primary" @click="onShowAddModal">添加定时器</NButton>
       </div>
-
       <NDataTable v-bind="table" />
     </div>
     <AddSchedulerModal v-model:show="addModal.show" @ok="onAddModalOk" />
@@ -106,16 +105,20 @@ const onDeleteScheduler = (scheduler: SchedulerModel) => {
 
 <style lang="less" scoped>
 .scheduler-list-view {
-  padding-top: 20px;
+  padding: 20px 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 
-  .center {
+  .container {
     margin: 0 auto;
     padding: 20px;
     width: 1000px;
     max-width: 100%;
     background: #fff;
-    box-shadow: v-bind("theme.boxShadow1");
-    border-radius: v-bind("theme.borderRadius");
+    border: 1px solid v-bind("theme.borderColor");
+    border-top-left-radius: v-bind("theme.borderRadius");
+    border-top-right-radius: v-bind("theme.borderRadius");
 
     .header {
       margin-bottom: 16px;
