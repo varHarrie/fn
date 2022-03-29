@@ -1,4 +1,3 @@
-import { getQuery } from "https://deno.land/x/oak@v10.2.0/helpers.ts";
 import { Router, Status } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.125.0/fs/mod.ts";
 import {
@@ -13,7 +12,7 @@ import {
   isIn,
   required,
 } from "https://deno.land/x/validasaur@v0.15.0/mod.ts";
-import { validateBody, validateQuery } from "../utils/validate.ts";
+import { validateBody } from "../utils/validate.ts";
 import { getFile, isFileExisted, listFiles, resolvePath } from "../utils/fs.ts";
 import { FunctionMethod } from "./../models.ts";
 import { functionCache } from "../cache.ts";
@@ -50,6 +49,7 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
 
   try {
     await store.users.insert({
+      id: crypto.randomUUID(),
       username: body.username,
       password: passwordMd5,
     });
@@ -67,15 +67,73 @@ privateRouter.post("/users", isAdmin(), async (ctx) => {
 
 privateRouter.get("/users", async (ctx) => {
   ctx.response.body = {
-    users: await store.users.find(),
+    users: await store.users.find({}, ["-password"]),
   };
 });
 
-privateRouter.delete("/users/:username", isAdmin(), async (ctx) => {
-  const username = ctx.params["username"];
-  await store.users.remove({ username });
+privateRouter.delete("/users/:id", isAdmin(), async (ctx) => {
+  const id = ctx.params["id"];
+  await store.users.remove({ id });
 
   ctx.response.body = {};
+});
+
+const methods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const urlRegexp = /^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*(\.(js|ts))?$/;
+
+privateRouter.get("/functions/:functionId", async (ctx) => {
+  const [method, url] = ctx.params.functionId.split(":");
+
+  if (!methods.includes(method) || !url.match(urlRegexp)) {
+    return ctx.throw(Status.BadRequest, "Function not found");
+  }
+
+  const filePath = resolvePath(config.functionDir, url, method + ".js");
+  const existed = await isFileExisted(filePath);
+
+  if (!existed) {
+    return ctx.throw(Status.NotFound, "Function not found");
+  }
+
+  const [file, code] = await Promise.all([
+    getFile(filePath),
+    Deno.readTextFile(filePath),
+  ]);
+
+  ctx.response.body = {
+    function: {
+      id: [method, url].join(":"),
+      method,
+      url,
+      code,
+      createdAt: file?.createdAt,
+      modifiedAt: file?.modifiedAt,
+      size: file?.size,
+    },
+  };
+});
+
+privateRouter.get("/functions", async (ctx) => {
+  const files = await listFiles(resolvePath(config.functionDir), (filePath) =>
+    /\/(GET|POST|PUT|PATCH|DELETE).js$/.test(filePath)
+  );
+
+  const functions = files.map((file) => {
+    const method = basename(file.path).replace(/.js$/, "");
+    const url = dirname(relative(config.functionDir, file.path));
+    const id = [method, url].join(":");
+
+    return {
+      id,
+      method,
+      url,
+      createdAt: file.createdAt,
+      modifiedAt: file.modifiedAt,
+      size: file.size,
+    };
+  });
+
+  ctx.response.body = { functions };
 });
 
 type CreateFunctionBody = {
@@ -85,8 +143,8 @@ type CreateFunctionBody = {
 };
 
 const createFunctionSchema = {
-  method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
-  url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*(\.(js|ts))?$/)],
+  method: [required, isIn(methods)],
+  url: [required, match(urlRegexp)],
   code: [required, isString],
 };
 
@@ -97,30 +155,85 @@ privateRouter.post("/functions", async (ctx) => {
   );
 
   const dirPath = resolvePath(config.functionDir, body.url);
-  const filePath = dirPath + "/" + body.method + ".js";
+  const filePath = resolvePath(dirPath, body.method + ".js");
+
+  if (await isFileExisted(filePath)) {
+    return ctx.throw(Status.BadRequest, "Function is existed");
+  }
 
   await ensureDir(dirPath);
   await Deno.writeTextFile(filePath, body.code);
   functionCache.set(filePath, body.code);
 
   ctx.response.body = {
-    function: { method: body.method, url: body.url },
+    function: {
+      id: [body.method, body.url].join(":"),
+      method: body.method,
+      url: body.url,
+    },
   };
 });
 
-const deleteFunctionSchema = {
-  method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
-  url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*$/)],
+type UpdateFunctionBody = {
+  method: FunctionMethod;
+  url: string;
+  code: string;
 };
 
-privateRouter.delete("/functions", async (ctx) => {
-  const query = await validateQuery(ctx, deleteFunctionSchema);
+const updateFunctionSchema = {
+  method: [required, isIn(methods)],
+  url: [required, match(urlRegexp)],
+  code: [required, isString],
+};
 
-  const filePath = resolvePath(
-    config.functionDir,
-    query.url,
-    query.method + ".js"
+privateRouter.put("/functions/:functionId", async (ctx) => {
+  const [method, url] = ctx.params.functionId.split(":");
+
+  if (!methods.includes(method) || !url.match(urlRegexp)) {
+    return ctx.throw(Status.BadRequest, "Function not found");
+  }
+
+  const oldFilePath = resolvePath(config.functionDir, url, method + ".js");
+  if (!(await isFileExisted(oldFilePath))) {
+    return ctx.throw(Status.BadRequest, "Function not found");
+  }
+
+  const body: UpdateFunctionBody = await validateBody(
+    ctx,
+    updateFunctionSchema
   );
+
+  const newDirPath = resolvePath(config.functionDir, body.url);
+  const newFilePath = resolvePath(newDirPath, body.method + ".js");
+
+  if ((await isFileExisted(newFilePath)) && newFilePath !== oldFilePath) {
+    return ctx.throw(Status.BadRequest, "Function is existed");
+  }
+
+  await ensureDir(newDirPath);
+  await Deno.remove(oldFilePath);
+  await Deno.writeTextFile(newFilePath, body.code);
+
+  functionCache.delete(oldFilePath);
+  functionCache.set(newFilePath, body.code);
+
+  ctx.response.body = {
+    function: {
+      id: [body.method, body.url].join(":"),
+      method: body.method,
+      url: body.url,
+    },
+  };
+});
+
+privateRouter.delete("/functions/:functionId", async (ctx) => {
+  const [method, url] = ctx.params.functionId.split(":");
+
+  if (!methods.includes(method) || !url.match(urlRegexp)) {
+    return ctx.throw(Status.BadRequest, "Function not found");
+  }
+
+  const filePath = resolvePath(config.functionDir, url, method + ".js");
 
   functionCache.delete(filePath);
 
@@ -129,51 +242,6 @@ privateRouter.delete("/functions", async (ctx) => {
   }
 
   ctx.response.body = {};
-});
-
-privateRouter.get("/functions", async (ctx) => {
-  const { method, url } = getQuery(ctx);
-
-  if (method !== undefined && url !== undefined) {
-    const filePath = resolvePath(config.functionDir, url, method + ".js");
-    const existed = await isFileExisted(filePath);
-
-    if (!existed) {
-      return ctx.throw(Status.NotFound, "Function not found");
-    }
-
-    const [file, code] = await Promise.all([
-      getFile(filePath),
-      Deno.readTextFile(filePath),
-    ]);
-
-    ctx.response.body = {
-      function: {
-        method,
-        url,
-        code,
-        createdAt: file?.createdAt,
-        modifiedAt: file?.modifiedAt,
-        size: file?.size,
-      },
-    };
-  } else {
-    const files = await listFiles(resolvePath(config.functionDir), (filePath) =>
-      /\/(GET|POST|PUT|PATCH|DELETE).js$/.test(filePath)
-    );
-
-    const functions = files.map((file) => {
-      return {
-        method: basename(file.path).replace(/.js$/, ""),
-        url: dirname(relative(config.functionDir, file.path)),
-        createdAt: file.createdAt,
-        modifiedAt: file.modifiedAt,
-        size: file.size,
-      };
-    });
-
-    ctx.response.body = { functions };
-  }
 });
 
 privateRouter.get("/schedulers", async (ctx) => {
@@ -192,7 +260,7 @@ type CreateSchedulerBody = {
 const createSchedulerSchema = {
   name: [required, isString],
   frequency: [required, match(/^(((\*|\d+|\d+-\d+)(\/\d+)?,?)\s?){5}$/)],
-  method: [required, isIn(["GET", "POST", "PUT", "PATCH", "DELETE"])],
+  method: [required, isIn(methods)],
   url: [required, match(/^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*$/)],
 };
 
@@ -214,8 +282,8 @@ privateRouter.post("/schedulers", async (ctx) => {
   ctx.response.body = { scheduler };
 });
 
-privateRouter.delete("/schedulers", async (ctx) => {
-  const id = getQuery(ctx)["id"];
+privateRouter.delete("/schedulers/:schedulerId", async (ctx) => {
+  const id = ctx.params.schedulerId;
 
   if (id) {
     await store.schedulers.removeOne({ id });
