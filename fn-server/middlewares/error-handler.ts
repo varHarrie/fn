@@ -13,13 +13,13 @@ export default function errorHandler() {
 
       if (isHttpError(error)) {
         ctx.response.status = error.status;
-        ctx.response.body = error.message;
+        ctx.response.body = { message: error.message };
       } else if (Error instanceof Error) {
         ctx.response.status = Status.InternalServerError;
-        ctx.response.body = error.message;
+        ctx.response.body = { message: error.message };
       } else {
         ctx.response.status = Status.InternalServerError;
-        ctx.response.body = "Unknown";
+        ctx.response.body = { message: "Unknown" };
       }
     }
   };
