@@ -152,15 +152,14 @@ const onSave = () => {
       confirm.loading = true;
 
       try {
-        if (fnOriginal.value) {
-          await functionApi.update(fnOriginal.value.id, fnEditing.value);
-        } else {
-          const result = await functionApi.add(fnEditing.value);
-          router.replace({
-            name: "function",
-            params: { functionId: result.id },
-          });
-        }
+        const result = fnOriginal.value
+          ? await functionApi.update(fnOriginal.value.id, fnEditing.value)
+          : await functionApi.add(fnEditing.value);
+
+        router.replace({
+          name: "function",
+          params: { functionId: result.id },
+        });
       } catch {
         confirm.loading = false;
         return;
