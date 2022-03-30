@@ -3,7 +3,7 @@
     <div class="container">
       <div class="side">
         <div class="head">
-          <NInput>
+          <NInput v-model:value="keyword">
             <template #prefix>
               <NIcon :component="IconSearch" />
             </template>
@@ -17,7 +17,7 @@
         <div class="list">
           <NSpin v-model:show="loading">
             <RouterLink
-              v-for="fn of functions"
+              v-for="fn of filteredFunctions"
               :key="fn.id"
               :to="`/functions/${fn.id}`"
               class="item"
@@ -42,7 +42,7 @@
 <script lang="ts" setup>
 import { NButton, NIcon, NInput, NSpin, useThemeVars } from "naive-ui";
 import { transparentize } from "polished";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { functionApi } from "/@/apis/function-api";
@@ -60,6 +60,16 @@ const theme = useThemeVars();
 const itemActiveBg = transparentize(0.9, theme.value.primaryColor);
 
 const functions = ref<FunctionModel[]>([]);
+
+const keyword = ref("");
+
+const filteredFunctions = computed(() => {
+  const keywordTrim = keyword.value.trim();
+
+  return keywordTrim
+    ? functions.value.filter((fn) => fn.url.includes(keywordTrim))
+    : functions.value;
+});
 
 const [loading, load] = useHandling(async () => {
   functions.value = await functionApi.list();
