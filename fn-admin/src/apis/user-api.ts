@@ -5,6 +5,11 @@ export type AddUserData = {
   username: string;
 };
 
+export type ChangePasswordData = {
+  oldPassword: string;
+  newPassword: string;
+};
+
 export const userApi = {
   async me(): Promise<UserModel> {
     const response = await http.get(`/api/me`);
@@ -20,5 +25,8 @@ export const userApi = {
   },
   async delete(id: string): Promise<void> {
     await http.delete(`/api/users/${id}`);
+  },
+  async changePassword(data: ChangePasswordData) {
+    await http.put(`/api/users/me/password`, data);
   },
 };

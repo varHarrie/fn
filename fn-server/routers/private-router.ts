@@ -78,10 +78,53 @@ privateRouter.delete("/users/:id", isAdmin(), async (ctx) => {
   ctx.response.body = {};
 });
 
+const passwordRegexp = /^[a-zA-Z0-9!@#$%^&*()]{6,30}$/;
+
+type ChangePasswordBody = {
+  oldPassword: string;
+  newPassword: string;
+};
+
+const changePasswordSchema = {
+  oldPassword: [required, match(passwordRegexp)],
+  newPassword: [required, match(passwordRegexp)],
+};
+
+privateRouter.put("/users/me/password", async (ctx) => {
+  const body: ChangePasswordBody = await validateBody(
+    ctx,
+    changePasswordSchema
+  );
+
+  const oldPassword = new Md5()
+    .update(body.oldPassword + config.passwordSalt)
+    .toString();
+
+  const newPassword = new Md5()
+    .update(body.newPassword + config.passwordSalt)
+    .toString();
+
+  const user = store.users.findOne({
+    username: ctx.state.username,
+    password: oldPassword,
+  });
+
+  if (!user) {
+    return ctx.throw(Status.BadRequest, "Password is incorrect");
+  }
+
+  await store.users.updateOne(
+    { username: ctx.state.username },
+    { password: newPassword }
+  );
+
+  ctx.response.body = {};
+});
+
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 const urlRegexp = /^[0-9a-zA-Z-]+(\/[0-9a-zA-Z-]+)*(\.(js|ts))?$/;
 
-privateRouter.get("/functions/:functionId", async (ctx) => {
+privateRouter.get("/functions/:functionId(.+)", async (ctx) => {
   const [method, url] = ctx.params.functionId.split(":");
 
   if (!methods.includes(method) || !url.match(urlRegexp)) {
@@ -186,7 +229,7 @@ const updateFunctionSchema = {
   code: [required, isString],
 };
 
-privateRouter.put("/functions/:functionId", async (ctx) => {
+privateRouter.put("/functions/:functionId(.+)", async (ctx) => {
   const [method, url] = ctx.params.functionId.split(":");
 
   if (!methods.includes(method) || !url.match(urlRegexp)) {
@@ -226,7 +269,7 @@ privateRouter.put("/functions/:functionId", async (ctx) => {
   };
 });
 
-privateRouter.delete("/functions/:functionId", async (ctx) => {
+privateRouter.delete("/functions/:functionId(.+)", async (ctx) => {
   const [method, url] = ctx.params.functionId.split(":");
 
   if (!methods.includes(method) || !url.match(urlRegexp)) {

@@ -34,6 +34,7 @@
       </div>
     </div>
     <RouterView />
+    <ChangePasswordModal v-bind="changePasswordModal.props" />
   </div>
 </template>
 
@@ -45,15 +46,17 @@ import {
   useMessage,
   useThemeVars,
 } from "naive-ui";
-import { transparentize } from "polished";
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
+import useModal from "/@/compositions/use-modal";
 import { useAppStore } from "/@/store";
 import IconTeam from "~icons/mdi/account-group-outline";
 import IconDown from "~icons/mdi/chevron-down";
 import IconScheduler from "~icons/mdi/clock-outline";
 import IconFunction from "~icons/mdi/function-variant";
+
+import ChangePasswordModal from "./ChangePasswordModal.vue";
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -61,8 +64,6 @@ const loader = useLoadingBar();
 const message = useMessage();
 const dialog = useDialog();
 const theme = useThemeVars();
-
-const logoBg = transparentize(0.8, theme.value.primaryColor);
 
 onMounted(async () => {
   try {
@@ -75,11 +76,17 @@ onMounted(async () => {
 });
 
 const userMenu = [
-  {
-    label: "退出登录",
-    key: "logout",
-  },
+  { label: "修改密码", key: "changePassword" },
+  { label: "退出登录", key: "logout" },
 ];
+
+const changePasswordModal = useModal({
+  onOk: () => {
+    message.success("密码修改成功，请重新登录");
+    appStore.logout();
+    router.replace({ name: "login" });
+  },
+});
 
 const onUserMenuSelect = (key: string) => {
   if (key === "logout") {
@@ -93,6 +100,8 @@ const onUserMenuSelect = (key: string) => {
         router.replace({ name: "login" });
       },
     });
+  } else if (key === "changePassword") {
+    changePasswordModal.show();
   }
 };
 </script>
