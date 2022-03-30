@@ -2,7 +2,7 @@
   <div class="login-view">
     <div class="center">
       <div class="title">
-        <div class="logo">fn</div>
+        <img class="logo" src="/@/assets/images/logo.png" />
       </div>
       <NForm ref="formRef" :model="formModel" :rules="formRules">
         <NFormItem path="username" label="用户名">
@@ -101,12 +101,6 @@ const onSubmit = async (e: Event) => {
         display: inline-block;
         width: 64px;
         height: 64px;
-        line-height: 64px;
-        font-size: 36px;
-        font-weight: bold;
-        color: v-bind("theme.primaryColor");
-        background: #cce7ff;
-        border-radius: v-bind("theme.borderRadius");
       }
     }
   }

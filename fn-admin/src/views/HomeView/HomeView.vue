@@ -2,7 +2,7 @@
   <div v-if="appStore.loginUser" class="home-view">
     <div class="system-bar">
       <div class="left">
-        <div class="logo">fn</div>
+        <img class="logo" src="/@/assets/images/logo.png" />
       </div>
       <div class="center">
         <div class="tabs">
@@ -120,16 +120,9 @@ const onUserMenuSelect = (key: string) => {
       transform: translateY(-50%);
 
       .logo {
-        display: inline-block;
+        display: block;
         width: 48px;
         height: 48px;
-        line-height: 48px;
-        font-size: 24px;
-        font-weight: bold;
-        color: v-bind("theme.primaryColor");
-        background: v-bind("logoBg");
-        border-radius: v-bind("theme.borderRadius");
-        text-align: center;
       }
     }
 
