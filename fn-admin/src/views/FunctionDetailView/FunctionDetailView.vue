@@ -9,7 +9,15 @@
               :options="methodOptions"
             />
             <NInputGroupLabel>/f/</NInputGroupLabel>
-            <NInput v-model:value="fnEditing.url" />
+            <NInput v-model:value="fnEditing.url">
+              <template #suffix>
+                <NIcon
+                  class="clickable"
+                  :component="IconCopy"
+                  @click="onCopyUrl"
+                />
+              </template>
+            </NInput>
           </NInputGroup>
           <NSpace class="actions">
             <NButton type="primary" :disabled="!savable" @click="onSave">
@@ -53,6 +61,7 @@
 </template>
 
 <script lang="ts" setup>
+import copy from "copy-text-to-clipboard";
 import day from "dayjs";
 import {
   NButton,
@@ -80,6 +89,7 @@ import {
   methodOptions,
 } from "/@/store/models";
 import IconSave from "~icons/mdi/check";
+import IconCopy from "~icons/mdi/content-copy";
 import IconTrash from "~icons/mdi/delete-outline";
 import IconFunction from "~icons/mdi/function-variant";
 
@@ -188,6 +198,18 @@ const onDelete = async () => {
     },
   });
 };
+
+const onCopyUrl = () => {
+  const originalUrl = fnEditing.value.url;
+
+  const url =
+    originalUrl && !originalUrl.startsWith("/")
+      ? location.origin + "/f/" + originalUrl
+      : location.origin + "/f" + originalUrl;
+
+  copy(url);
+  message.success("URL复制成功");
+};
 </script>
 
 <style lang="less" scoped>
@@ -214,6 +236,10 @@ const onDelete = async () => {
       .inputs {
         flex: 1;
         min-width: 500px;
+
+        .clickable {
+          cursor: pointer;
+        }
 
         .n-select {
           width: 200px;

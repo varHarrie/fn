@@ -17,6 +17,7 @@
     "@codemirror/view": "^0.19.46",
     "@iconify-json/mdi": "^1.1.5",
     "axios": "^0.26.1",
+    "copy-text-to-clipboard": "^3.0.1",
     "dayjs": "^1.10.8",
     "naive-ui": "^2.26.3",
     "pinia": "^2.0.11",
