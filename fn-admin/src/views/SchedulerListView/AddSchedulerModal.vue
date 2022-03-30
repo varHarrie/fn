@@ -36,7 +36,6 @@ import {
   NInput,
   NModal,
   NSelect,
-  useMessage,
 } from "naive-ui";
 import { type Ref, reactive, ref, watch } from "vue";
 
@@ -48,15 +47,13 @@ import {
   methodOptions,
 } from "/@/store/models";
 
-const message = useMessage();
-
 type AddSchedulerModalProps = {
   show: boolean;
 };
 
 type AddSchedulerModalEvents = {
   (e: "ok", scheduler: SchedulerModel): void;
-  (e: "update:show", show: boolean): void;
+  (e: "cancel"): void;
 };
 
 const props = defineProps<AddSchedulerModalProps>();
@@ -122,17 +119,12 @@ const [loading, onOk] = useHandling(async () => {
     return;
   }
 
-  try {
-    const scheduler = await schedulerApi.save(form.model);
+  const scheduler = await schedulerApi.save(form.model);
 
-    emit("update:show", false);
-    emit("ok", scheduler);
-  } catch (error) {
-    if (error instanceof Error) message.error(error.message);
-  }
+  emit("ok", scheduler);
 });
 
 const onCancel = () => {
-  emit("update:show", false);
+  emit("cancel");
 };
 </script>

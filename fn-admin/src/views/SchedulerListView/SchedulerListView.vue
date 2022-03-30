@@ -3,11 +3,11 @@
     <div class="container">
       <div class="header">
         <span class="title">定时器</span>
-        <NButton type="primary" @click="onShowAddModal">添加定时器</NButton>
+        <NButton type="primary" @click="addModal.show()">添加定时器</NButton>
       </div>
       <NDataTable v-bind="table" />
     </div>
-    <AddSchedulerModal v-model:show="addModal.show" @ok="onAddModalOk" />
+    <AddSchedulerModal v-bind="addModal.props" />
   </div>
 </template>
 
@@ -24,6 +24,7 @@ import { type Ref, onMounted, reactive } from "vue";
 
 import { schedulerApi } from "/@/apis/scheduler-api";
 import useHandling from "/@/compositions/use-handling";
+import useModal from "/@/compositions/use-modal";
 import type { SchedulerModel } from "/@/store/models";
 
 import AddSchedulerModal from "./AddSchedulerModal.vue";
@@ -68,21 +69,11 @@ const table = reactive<TableModel>({
 
 onMounted(() => load());
 
-type EditModalData = {
-  show: boolean;
-};
-
-const addModal = reactive<EditModalData>({
-  show: false,
+const addModal = useModal({
+  onOk: async () => {
+    await load();
+  },
 });
-
-const onShowAddModal = () => {
-  addModal.show = true;
-};
-
-const onAddModalOk = async () => {
-  await load();
-};
 
 const dialog = useDialog();
 const message = useMessage();
