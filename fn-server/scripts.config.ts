@@ -1,5 +1,4 @@
 import { DenonConfig } from "https://deno.land/x/denon@2.5.0/mod.ts";
-import { config as env } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
 
 const config: DenonConfig = {
   allow: ["env", "net", "read", "write"],
@@ -9,12 +8,16 @@ const config: DenonConfig = {
   scripts: {
     dev: {
       cmd: "deno run app.ts",
-      env: env({ path: ".env.dev" }),
+      env: {
+        ENV: "development",
+      },
       watch: true,
     },
     compile: {
       cmd: "deno compile --output dist/app app.ts",
-      env: env({ path: ".env.prod" }),
+      env: {
+        ENV: "production",
+      },
       watch: false,
     },
   },

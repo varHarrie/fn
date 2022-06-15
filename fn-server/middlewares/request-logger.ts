@@ -1,6 +1,6 @@
 import { Context, HTTPMethods } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 import * as colors from "https://deno.land/std@0.125.0/fmt/colors.ts";
-import { format } from "https://deno.land/std@0.125.0/datetime/mod.ts";
+import logger from "../utils/logger.ts";
 
 function getStatusColor(status: number) {
   if (status >= 500) return colors.red;
@@ -27,9 +27,8 @@ export default function requestLogger() {
     const { status } = ctx.response;
     const { method, url } = ctx.request;
 
-    console.log(
+    logger.info(
       [
-        format(new Date(), "[yyyy-MM-dd HH:mm:ss]"),
         getStatusColor(ctx.response.status)(status.toString()),
         colors.gray(ms + "ms"),
         colors.bold(methodColors[method](method)),

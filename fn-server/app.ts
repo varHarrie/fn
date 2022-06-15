@@ -8,6 +8,7 @@ import publicRouter from "./routers/public-router.ts";
 import schedulerManager from "./scheduler-manager.ts";
 import config from "./config.ts";
 import store from "./store.ts";
+import logger from "./utils/logger.ts";
 
 const app = new Application();
 
@@ -28,7 +29,7 @@ app.addEventListener("listen", ({ hostname, port, secure }) => {
   const origin = `${secure ? "https" : "http"}://${hostname}:${port}`;
 
   schedulerManager.bootstrap(origin);
-  console.log(`⚡Running at ${origin}`);
+  logger.info(`⚡Running at ${origin}`);
 });
 
 await store.load();
