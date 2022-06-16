@@ -10,6 +10,7 @@ import config from "./config.ts";
 import store from "./store.ts";
 import logger from "./utils/logger.ts";
 
+const STATIC_DIR = `${Deno.cwd()}/static`;
 const app = new Application();
 
 app.use(requestLogger());
@@ -24,6 +25,18 @@ app.use(privateRouter.allowedMethods());
 
 app.use(publicRouter.routes());
 app.use(publicRouter.allowedMethods());
+
+app.use(async (ctx, next) => {
+  try {
+    if (ctx.request.url.pathname.includes(".")) {
+      await ctx.send({ root: STATIC_DIR });
+    } else {
+      await ctx.send({ root: STATIC_DIR, path: "index.html" });
+    }
+  } catch {
+    await next();
+  }
+});
 
 app.addEventListener("listen", ({ hostname, port, secure }) => {
   const origin = `${secure ? "https" : "http"}://${hostname}:${port}`;

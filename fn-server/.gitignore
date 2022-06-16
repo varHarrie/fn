@@ -1,6 +1,7 @@
 /dist
 /data
 /logs
+/static
 /env/*
 !/env/.env.example
 jwt.key
